@@ -12,6 +12,7 @@ trafilatura==1.12.2
 
 # LLM / AI  (Gemini)
 google-genai==1.16.0
+tavily-python==0.5.1
 cohere==5.11.4
 
 # Vector DB

@@ -12,4 +12,3 @@ build/
 *.log
 pgdata/
 redisdata/
-docker-compose.yml

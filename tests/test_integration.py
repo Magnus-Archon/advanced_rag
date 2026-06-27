@@ -32,12 +32,11 @@ async def test_embedding_shape():
 
 
 @pytest.mark.asyncio
-async def test_brave_search():
-    from app.search.providers import BraveSearchProvider
-    provider = BraveSearchProvider()
+async def test_tavily_search():
+    from app.search.providers import TavilySearchProvider
+    provider = TavilySearchProvider()
     results = await provider.search("Python programming language", count=3)
     assert isinstance(results, list)
-    await provider.aclose()
 
 
 @pytest.mark.asyncio

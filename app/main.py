@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(
         title="RAG Search Engine",
-        description="Advanced RAG + agentic web search",
+        description="Perplexity-style RAG + agentic web search",
         version="1.0.0",
         lifespan=lifespan,
     )

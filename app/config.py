@@ -20,9 +20,10 @@ class Settings(BaseSettings):
     gemini_chat_model: str = "gemini-2.0-flash"
     gemini_embedding_model: str = "text-embedding-004"  # 768-dim
 
-    # ── Search ─────────────────────────────────────────
-    brave_api_key: str
-    brave_search_count: int = 10
+    # ── Search (Tavily) ────────────────────────────────
+    tavily_api_key: str
+    tavily_search_depth: str = "basic"          # "basic" | "advanced"
+    tavily_max_results: int = 10
 
     # ── Reranking ──────────────────────────────────────
     cohere_api_key: str = ""

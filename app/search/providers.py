@@ -1,7 +1,13 @@
 """Web search providers.
 
-Primary: Brave Search API
+Primary: Tavily Search API
 Fallback: extensible via BaseSearchProvider.
+
+Tavily advantages over Brave for RAG:
+  - Returns clean pre-extracted content per result (no need to fetch every page)
+  - Natively supports "advanced" depth for more thorough retrieval
+  - Built-in answer synthesis (ignored here; we do our own RAG)
+  - Results include `raw_content` when depth="advanced"
 """
 from __future__ import annotations
 
@@ -9,7 +15,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Optional
 
-import httpx
+from tavily import AsyncTavilyClient
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.config import get_settings
@@ -27,48 +33,40 @@ class BaseSearchProvider(ABC):
         ...
 
 
-class BraveSearchProvider(BaseSearchProvider):
-    BASE_URL = "https://api.search.brave.com/res/v1/web/search"
-
+class TavilySearchProvider(BaseSearchProvider):
     def __init__(self) -> None:
-        self._client = httpx.AsyncClient(
-            headers={
-                "Accept": "application/json",
-                "Accept-Encoding": "gzip",
-                "X-Subscription-Token": settings.brave_api_key,
-            },
-            timeout=15.0,
-        )
+        self._client = AsyncTavilyClient(api_key=settings.tavily_api_key)
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=8))
     async def search(self, query: str, count: int = 10) -> list[SearchResult]:
         try:
-            resp = await self._client.get(
-                self.BASE_URL,
-                params={"q": query, "count": count, "text_decorations": 0},
+            response = await self._client.search(
+                query=query,
+                search_depth=settings.tavily_search_depth,
+                max_results=count,
+                include_raw_content=False,   # we fetch pages ourselves via WebFetcher
+                include_answer=False,        # we generate our own answer via LLM
             )
-            resp.raise_for_status()
-            data = resp.json()
         except Exception as exc:
-            logger.warning("brave_search_error", query=query, error=str(exc))
+            logger.warning("tavily_search_error", query=query[:60], error=str(exc))
             return []
 
         results: list[SearchResult] = []
-        for item in data.get("web", {}).get("results", []):
+        for item in response.get("results", []):
             url = item.get("url", "")
+            # Tavily provides a snippet in `content`; fall back to empty string
+            snippet = item.get("content", "")
             results.append(
                 SearchResult(
                     title=item.get("title", ""),
                     url=url,
-                    snippet=item.get("description", ""),
+                    snippet=snippet,
                     trust_score=score_domain_trust(url),
                 )
             )
-        logger.info("brave_search_ok", query=query[:60], n=len(results))
-        return results
 
-    async def aclose(self) -> None:
-        await self._client.aclose()
+        logger.info("tavily_search_ok", query=query[:60], n=len(results))
+        return results
 
 
 # ── Aggregator ────────────────────────────────────────────────────────────────
@@ -77,14 +75,14 @@ class SearchAggregator:
     """Run multiple queries in parallel and deduplicate results."""
 
     def __init__(self, provider: Optional[BaseSearchProvider] = None) -> None:
-        self._provider = provider or BraveSearchProvider()
+        self._provider = provider or TavilySearchProvider()
 
     async def search_many(
         self,
         queries: list[str],
         count_per_query: int | None = None,
     ) -> list[SearchResult]:
-        count = count_per_query or settings.brave_search_count
+        count = count_per_query or settings.tavily_max_results
         tasks = [self._provider.search(q, count) for q in queries]
         batches = await asyncio.gather(*tasks, return_exceptions=True)
 

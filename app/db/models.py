@@ -22,7 +22,6 @@ engine = create_async_engine(
     max_overflow=20,
     pool_pre_ping=True,
     echo=False,
-    connect_args={"ssl": True}
 )
 
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

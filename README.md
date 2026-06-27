@@ -1,4 +1,4 @@
-# 🔍 RAG Search Engine
+# 🔍 RAG Search Engine — Perplexity-Style
 
 A production-grade Retrieval-Augmented Generation (RAG) + agentic web search system.  
 Modular, lean, and fully async — no LangChain abstractions.
@@ -79,7 +79,7 @@ User Query
 | Feature | Implementation |
 |---|---|
 | Query expansion | LLM generates 4 query variants |
-| Web search | Brave Search API (parallel) |
+| Web search | Tavily Search API (parallel) |
 | Page extraction | `httpx` + `trafilatura` |
 | Chunking | Token-aware, heading-preserving, 1000t / 175t overlap |
 | Embeddings | OpenAI `text-embedding-004` (768-dim) (768-dim) |
@@ -113,7 +113,7 @@ User Query
 
 ```bash
 git clone <repo>
-cd advanced_rag
+cd perplexity_rag
 
 cp .env.example .env
 # Edit .env and fill in your API keys
@@ -253,7 +253,7 @@ data: {}
 | `GEMINI_API_KEY` | required | Gemini API key |
 | `GEMINI_CHAT_MODEL=gemini-2.0-flash
 | `OPENAI_EMBEDDING_MODEL` | `text-embedding-004` (768-dim) | Embedding model |
-| `BRAVE_API_KEY` | required | Brave Search API key |
+| `TAVILY_API_KEY | required | Tavily API key
 | `BRAVE_SEARCH_COUNT` | `10` | Results per query |
 | `COHERE_API_KEY` | optional | Cohere rerank key |
 | `DATABASE_URL` | see example | PostgreSQL async URL |
@@ -282,7 +282,7 @@ SKIP_INTEGRATION=0 pytest tests/test_integration.py -v -s
 ## Project Structure
 
 ```
-advanced_rag/
+perplexity_rag/
 ├── app/
 │   ├── main.py                  # FastAPI app factory + lifespan
 │   ├── config.py                # Pydantic settings
