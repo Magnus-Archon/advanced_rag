@@ -36,7 +36,7 @@ class ChunkRecord(Base):
     content     = Column(Text, nullable=False)
     trust_score = Column(Float, default=0.65)
     source_type = Column(String(16), default="web", index=True)  # "web" | "upload"
-    embedding   = Column(Vector(768))                             # text-embedding-004
+    embedding   = Column(Vector(768))                             # gemini-embedding-001 (truncated to 768)
     metadata_   = Column("metadata", JSONB, default=dict)
 
     __table_args__ = (

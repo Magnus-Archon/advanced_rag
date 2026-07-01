@@ -18,7 +18,12 @@ class Settings(BaseSettings):
     # ── LLM (Gemini) ───────────────────────────────────
     gemini_api_key: str
     gemini_chat_model: str = "gemini-2.0-flash"
-    gemini_embedding_model: str = "text-embedding-004"  # 768-dim
+    # text-embedding-004 was deprecated by Google (404s on v1beta as of late
+    # 2025). gemini-embedding-001 is the current model; it defaults to
+    # 3072 dims, so we request output_dimensionality=768 to match our
+    # existing pgvector column and avoid a DB migration.
+    gemini_embedding_model: str = "gemini-embedding-001"
+    gemini_embedding_dim: int = 768
 
     # ── Search (Tavily) ────────────────────────────────
     tavily_api_key: str
