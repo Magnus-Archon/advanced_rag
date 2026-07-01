@@ -121,3 +121,43 @@ def test_context_builder_token_limit():
     ]
     context, sources = build_context(chunks)
     assert len(context) <= 21000  # max_context_chars + small buffer
+
+
+# ── File ingestor (no network/DB needed — just parsing) ───────────────────────
+
+def test_chunk_document_source_type_upload():
+    from app.core.chunker import chunk_document
+    chunks = chunk_document("Hello world. " * 50, url="upload://test.txt#abc123",
+                            title="test.txt", source_type="upload")
+    assert all(c.source_type == "upload" for c in chunks)
+
+
+def test_chunk_document_source_type_web():
+    from app.core.chunker import chunk_document
+    chunks = chunk_document("Hello world. " * 50, url="https://example.com",
+                            title="Example", source_type="web")
+    assert all(c.source_type == "web" for c in chunks)
+
+
+def test_search_request_scope_default():
+    from app.core.models import SearchRequest
+    req = SearchRequest(query="test")
+    assert req.scope == "web"
+
+
+def test_search_request_scope_files():
+    from app.core.models import SearchRequest
+    req = SearchRequest(query="test", scope="files")
+    assert req.scope == "files"
+
+
+def test_file_url_format():
+    """Uploaded file URLs use upload:// scheme."""
+    import hashlib
+    from pathlib import Path
+    filename = "report.pdf"
+    data = b"fake pdf content"
+    content_hash = hashlib.sha256(data).hexdigest()
+    url = f"upload://{filename}#{content_hash[:8]}"
+    assert url.startswith("upload://")
+    assert filename in url

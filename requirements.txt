@@ -37,3 +37,8 @@ sse-starlette==2.1.3
 # Dev / Testing
 pytest==8.3.4
 pytest-asyncio==0.24.0
+
+# File ingestion
+pymupdf==1.24.14         # PDF extraction (fitz)
+python-docx==1.1.2       # DOCX extraction
+python-multipart==0.0.18 # FastAPI file uploads

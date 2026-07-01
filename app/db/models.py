@@ -1,9 +1,6 @@
 """SQLAlchemy async models for PostgreSQL + pgvector."""
 from __future__ import annotations
 
-import json
-from typing import Any
-
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, String, Text, Float, Index
 from sqlalchemy.dialects.postgresql import JSONB
@@ -13,8 +10,6 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import get_settings
 
 settings = get_settings()
-
-# ── Engine ────────────────────────────────────────────────────────────────────
 
 engine = create_async_engine(
     settings.database_url,
@@ -27,8 +22,6 @@ engine = create_async_engine(
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
-# ── ORM models ────────────────────────────────────────────────────────────────
-
 class Base(DeclarativeBase):
     pass
 
@@ -36,13 +29,14 @@ class Base(DeclarativeBase):
 class ChunkRecord(Base):
     __tablename__ = "chunks"
 
-    id = Column(String(16), primary_key=True)          # chunk_id
-    url = Column(Text, nullable=False, index=True)
-    title = Column(Text, default="")
-    content = Column(Text, nullable=False)
+    id          = Column(String(16), primary_key=True)
+    url         = Column(Text, nullable=False, index=True)
+    title       = Column(Text, default="")
+    content     = Column(Text, nullable=False)
     trust_score = Column(Float, default=0.65)
-    embedding = Column(Vector(768))                    # text-embedding-004 dim
-    metadata_ = Column("metadata", JSONB, default=dict)
+    source_type = Column(String(16), default="web", index=True)  # "web" | "upload"
+    embedding   = Column(Vector(768))                             # text-embedding-004
+    metadata_   = Column("metadata", JSONB, default=dict)
 
     __table_args__ = (
         Index(
@@ -54,8 +48,6 @@ class ChunkRecord(Base):
         ),
     )
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 async def get_session() -> AsyncSession:
     async with AsyncSessionLocal() as session:

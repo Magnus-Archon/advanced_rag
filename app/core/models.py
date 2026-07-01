@@ -22,6 +22,7 @@ class DocumentChunk(BaseModel):
     title: str
     text: str
     trust_score: float = 0.65
+    source_type: str = "web"     # "web" | "upload"
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -38,6 +39,7 @@ class SearchRequest(BaseModel):
     multihop: bool = True
     reflect: bool = True
     debug: bool = False
+    scope: str = "web"   # "web" (search internet) | "files" (uploaded docs only) | "all" (both)
 
 
 class SourceCitation(BaseModel):
