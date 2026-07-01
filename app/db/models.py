@@ -6,6 +6,7 @@ from sqlalchemy import Column, String, Text, Float, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+import sqlalchemy as sa
 
 from app.config import get_settings
 
@@ -55,6 +56,27 @@ async def get_session() -> AsyncSession:
 
 
 async def create_tables() -> None:
+    """Create tables and run incremental column migrations."""
     async with engine.begin() as conn:
-        await conn.execute(__import__("sqlalchemy").text("CREATE EXTENSION IF NOT EXISTS vector"))
+        # Extension
+        await conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS vector"))
+
+        # Create any missing tables
         await conn.run_sync(Base.metadata.create_all)
+
+        # ── Incremental migrations ────────────────────────────────────────────
+        # Add source_type column if it doesn't exist (existing deployments)
+        await conn.execute(sa.text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'chunks' AND column_name = 'source_type'
+                ) THEN
+                    ALTER TABLE chunks
+                        ADD COLUMN source_type VARCHAR(16) NOT NULL DEFAULT 'web';
+                    CREATE INDEX IF NOT EXISTS ix_chunks_source_type
+                        ON chunks (source_type);
+                END IF;
+            END$$;
+        """))
